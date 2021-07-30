@@ -36,3 +36,18 @@ export PATH=${HADOOP_HOME}/sbin:$PATH
 # hive连接
 hive
 > show tables;
+
+内部表和外部表  
+    Use external tables when files are already present or in remote locations, and the files should remain even if the table is dropped.
+
+
+- 分桶表和分区表
+    为什么要有分区表?
+        创建的时候就有根据指定字段分区的特性, 查询的时候可以减少遍历  
+
+    为什么要有分桶?  
+        一个分区内的数据根据字段进行哈希,在join操作等分析操作中可以直接访问桶,再次减少访问数据量;
+
+# 重启metastore
+killall metastore  
+killall hiveserver2  

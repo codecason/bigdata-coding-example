@@ -175,5 +175,103 @@ hdfs目录
 ~~~
 
 在HIVE_HOME目录下新建:
+    hive-env.sh  
+    hive-site.xml  
+
+#### hive内置函数和自定义函数
+``UDF: User-Defined Function``
+
+udf  user-defined functions  
+
+udaf  aggregate functions  
+
+udtf  table-generating functions  
 
 
+- 注册临时函数
+hdfs dfs -mkdir /udfs
+hdfs dfs -put filename /udfs
+
+in hive:
+add jar hive-udf-test-1.0-SNAPSHOT.jar;
+
+CREATE TEMPORARY FUNCTION avg_score as "com.imooc.code.hive.udf.AvgScore";
+
+drop temporary function udf_name;
+
+Q: 如何注册永久函数?
+create function UDF_NAME as 'com.imooc.code.hive.udf.AvgScore' using jar 'hdfs:///udfs/hive-udf-test-1.0-SNAPSHOT.jar';
+
+#### Hive 存储格式
+
+|| 优点 | 缺点 | 
+|-|-|-|
+|TextFile|简单|不支持分片|
+|Sequence File|可压缩、可分割|需要合并、不易查看|
+|OrcFile|分片、按列存储||
+
+列式存储: 对于更新和插入的支持不好, 对查询友好
+
+OrcFile: 列式存储格式的一种实现(也是一个项目)  
+    带索引
+    支持有限的ACID, 查询效率较Parquet高
+
+#### Hive 面试知识点总结
+
+SQL到Hive的流程
+
+    在SQL层面跟MySQL大同小异;
+        Rule-Based Optimizer  
+        Cost-Based Optimizer  
+
+    在存储层要参考HDFS
+
+数据倾斜 
+
+    解决方式:  
+        参数调节: hive.map.aggr, hive.groupby.skewindata (具体不清楚)  
+        调整SQL语句: Join方式、空值、大小表join  
+
+#### 离线数仓 VS 实时数仓
+
+上面讲的都是离线数仓:
+
+    对外提供T+1数据仓库: 离线数仓 (不是硬性标准 )
+
+    ODS、DWD、DM
+    ODS: Operational Data Store  
+        运营数据存储  
+    DWD: Data Warehouse Detail  
+        数据明细层  
+
+Lambda架构:  
+    在离线数据架构基础上加入一个加速层, 使用流处理技术完成实时性较高的指标计算  
+
+    批处理层+加速层  
+
+    实际场景: 广告、推荐  
+
+    缺点:  
+
+Kappa架构:  
+    本身就是以实时事件为核心的
+
+    缺点: 
+        效率没有批处理高  
+        每次计算历史都要重放数据  
+        跟批处理的结果可能不一致  
+
+实际场景:
+    Lambda和Kappa混合
+
+#### 实际架构
+
+阿里菜鸟架构
+    Spark/Flink -> AnalyticDB for MySQL -> DataV大屏
+
+美团实时数仓
+
+    ODS层 (binglog/消息队列/系统日志) -> DWD (数据明细层)
+        -> 数据汇总层 -> 应用层
+
+OLAP 领域Presto、Druid、Clickhouse、Greenplum
